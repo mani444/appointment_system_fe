@@ -114,15 +114,6 @@ export function Clients() {
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm">
-                      View Details
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Contact
-                    </Button>
-                  </div>
                 </div>
               ))}
               {filteredClients.length === 0 && (
