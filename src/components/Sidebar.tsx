@@ -1,15 +1,21 @@
 import { Calendar, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   activeView: string;
-  onViewChange: (view: string) => void;
 }
 
-export function Sidebar({ activeView, onViewChange }: SidebarProps) {
+export function Sidebar({ activeView }: SidebarProps) {
+  const navigate = useNavigate();
+
   const menuItems = [
-    { icon: Calendar, label: "Appointments" },
-    { icon: Users, label: "Clients" },
+    { icon: Calendar, label: "Appointments", path: "/appointments" },
+    { icon: Users, label: "Clients", path: "/clients" },
   ];
+
+  const handleViewChange = (path: string) => {
+    navigate(path);
+  };
 
   return (
     <div className="w-64 bg-card border-r border-border h-screen p-4">
@@ -24,7 +30,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
           return (
             <button
               key={item.label}
-              onClick={() => onViewChange(item.label)}
+              onClick={() => handleViewChange(item.path)}
               className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-left transition-colors ${
                 isActive
                   ? "bg-primary text-primary-foreground"

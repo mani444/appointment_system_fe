@@ -1,31 +1,34 @@
 import { useState } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Layout } from "@/layout/Layout";
 import { UpcomingAppointments } from "@/pages/UpcomingAppointments";
 import { Clients } from "@/pages/Clients";
 import { AppointmentForm } from "@/pages/AppointmentForm";
 
 function App() {
-  const [activeView, setActiveView] = useState("Appointments");
+  const location = useLocation();
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
 
-  const handleViewChange = (view: string) => {
-    setActiveView(view);
-    setShowAppointmentForm(false);
-  };
-
-  const renderPage = () => {
-    switch (activeView) {
-      case "Clients":
-        return <Clients />;
-      case "Appointments":
+  // Get the current active view based on the current path
+  const getActiveView = () => {
+    switch (location.pathname) {
+      case "/clients":
+        return "Clients";
+      case "/appointments":
+      case "/":
+        return "Appointments";
       default:
-        return <UpcomingAppointments />;
+        return "Appointments";
     }
   };
 
   return (
-    <Layout activeView={activeView} onViewChange={handleViewChange}>
-      {renderPage()}
+    <Layout activeView={getActiveView()}>
+      <Routes>
+        <Route path="/" element={<Navigate to="/appointments" replace />} />
+        <Route path="/appointments" element={<UpcomingAppointments />} />
+        <Route path="/clients" element={<Clients />} />
+      </Routes>
       {showAppointmentForm && (
         <AppointmentForm
           open={showAppointmentForm}
