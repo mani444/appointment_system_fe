@@ -29,10 +29,10 @@ api.interceptors.response.use(
     } else if (error.response?.data?.errors) {
       // Backend API returned structured errors
       const backendErrors = error.response.data.errors;
-      const errorMessage = Array.isArray(backendErrors) 
-        ? backendErrors.join(", ") 
+      const errorMessage = Array.isArray(backendErrors)
+        ? backendErrors.join(", ")
         : backendErrors;
-      
+
       // Create a new error with the backend message
       const enhancedError = new Error(errorMessage);
       enhancedError.name = "BackendError";

@@ -48,7 +48,8 @@ export function AppointmentForm({
 }: AppointmentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { clients } = useClients();
-  const { createAppointment, updateAppointment, error, setError } = useAppointments();
+  const { createAppointment, updateAppointment, error, setError } =
+    useAppointments();
 
   const {
     register,
@@ -125,14 +126,14 @@ export function AppointmentForm({
               : "Create a new appointment for a client."}
           </DialogDescription>
         </DialogHeader>
-        
+
         {/* Display backend errors */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-md p-3">
             <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="client">Select Client</Label>
@@ -140,11 +141,11 @@ export function AppointmentForm({
               name="client_id"
               control={control}
               render={({ field }) => (
-                <Select 
+                <Select
                   onValueChange={(value) => {
                     field.onChange(value);
                     clearErrorOnChange();
-                  }} 
+                  }}
                   value={field.value}
                 >
                   <SelectTrigger>
