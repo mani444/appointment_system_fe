@@ -52,7 +52,13 @@ export function useClients() {
     try {
       setError(null);
       const newClient = await clientsApi.create(clientData);
-      setClients((prev) => [...prev, newClient]);
+      // Use functional state update to ensure we get the latest state
+      setClients((prev) => {
+        // Check if client already exists to avoid duplicates
+        const exists = prev.some((client) => client.id === newClient.id);
+        if (exists) return prev;
+        return [...prev, newClient];
+      });
       return newClient;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create client");
@@ -67,6 +73,7 @@ export function useClients() {
     try {
       setError(null);
       const updatedClient = await clientsApi.update(id, clientData);
+      // Use functional state update to ensure we get the latest state
       setClients((prev) =>
         prev.map((client) => (client.id === id ? updatedClient : client)),
       );
@@ -81,6 +88,7 @@ export function useClients() {
     try {
       setError(null);
       await clientsApi.delete(id);
+      // Use functional state update to ensure we get the latest state
       setClients((prev) => prev.filter((client) => client.id !== id));
       return true;
     } catch (err) {

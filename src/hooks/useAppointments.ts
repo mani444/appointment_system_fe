@@ -44,7 +44,13 @@ export function useAppointments(clientId?: number) {
     try {
       setError(null);
       const newAppointment = await appointmentsApi.create(appointmentData);
-      setAppointments((prev) => [...prev, newAppointment]);
+      // Use functional state update to ensure we get the latest state
+      setAppointments((prev) => {
+        // Check if appointment already exists to avoid duplicates
+        const exists = prev.some((apt) => apt.id === newAppointment.id);
+        if (exists) return prev;
+        return [...prev, newAppointment];
+      });
       return newAppointment;
     } catch (err) {
       setError(
@@ -64,6 +70,7 @@ export function useAppointments(clientId?: number) {
         id,
         appointmentData,
       );
+      // Use functional state update to ensure we get the latest state
       setAppointments((prev) =>
         prev.map((appointment) =>
           appointment.id === id ? updatedAppointment : appointment,
@@ -82,6 +89,7 @@ export function useAppointments(clientId?: number) {
     try {
       setError(null);
       await appointmentsApi.delete(id);
+      // Use functional state update to ensure we get the latest state
       setAppointments((prev) =>
         prev.filter((appointment) => appointment.id !== id),
       );

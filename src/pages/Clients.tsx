@@ -24,6 +24,10 @@ export function Clients() {
       client.phone.includes(searchTerm),
   );
 
+  const handleClientFormClose = (open: boolean) => {
+    setIsClientFormOpen(open);
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -133,7 +137,10 @@ export function Clients() {
         </Card>
       </div>
 
-      <ClientForm open={isClientFormOpen} onOpenChange={setIsClientFormOpen} />
+      <ClientForm
+        open={isClientFormOpen}
+        onOpenChange={handleClientFormClose}
+      />
     </div>
   );
 }
