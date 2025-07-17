@@ -19,14 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2 } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Plus, Loader2, Clock } from "lucide-react";
 import { useClients } from "@/hooks/useClients";
 import { useAppointments } from "@/hooks/useAppointments";
 import type { Appointment } from "@/types/api";
 
 const appointmentSchema = z.object({
   client_id: z.string().min(1, "Please select a client"),
-  time: z.string().min(1, "Please select date and time"),
+  date: z.date({
+    message: "Please select a date",
+  }),
+  time: z.string().min(1, "Please select a time"),
 });
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
@@ -60,16 +64,23 @@ export function AppointmentForm({
   useEffect(() => {
     if (appointment) {
       setValue("client_id", appointment.client_id.toString());
-      setValue("time", new Date(appointment.time).toISOString().slice(0, 16));
+      const appointmentDate = new Date(appointment.time);
+      setValue("date", appointmentDate);
+      setValue("time", appointmentDate.toTimeString().slice(0, 5)); // HH:MM format
     }
   }, [appointment, setValue]);
 
   const onSubmit = async (data: AppointmentFormData) => {
     setIsSubmitting(true);
     try {
+      // Combine date and time into a single datetime
+      const [hours, minutes] = data.time.split(":").map(Number);
+      const combinedDateTime = new Date(data.date);
+      combinedDateTime.setHours(hours, minutes, 0, 0);
+
       const appointmentData = {
         client_id: parseInt(data.client_id),
-        time: new Date(data.time).toISOString(),
+        time: combinedDateTime.toISOString(),
       };
 
       let result;
@@ -133,13 +144,36 @@ export function AppointmentForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="time">Date and Time</Label>
-            <Input
-              id="time"
-              type="datetime-local"
-              {...register("time")}
-              min={new Date().toISOString().slice(0, 16)}
+            <Label htmlFor="date">Date</Label>
+            <Controller
+              name="date"
+              control={control}
+              render={({ field }) => (
+                <DatePicker
+                  date={field.value}
+                  onDateChange={field.onChange}
+                  placeholder="Select appointment date"
+                  disabled={isSubmitting}
+                />
+              )}
             />
+            {errors.date && (
+              <p className="text-sm text-red-500">{errors.date.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="time">Time</Label>
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Input
+                id="time"
+                type="time"
+                {...register("time")}
+                disabled={isSubmitting}
+                className="flex-1"
+              />
+            </div>
             {errors.time && (
               <p className="text-sm text-red-500">{errors.time.message}</p>
             )}
