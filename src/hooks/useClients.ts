@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { clientsApi } from "@/services/api";
 import type {
   Client,
@@ -11,7 +11,7 @@ export function useClients() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -44,7 +44,7 @@ export function useClients() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const createClient = async (
     clientData: CreateClientRequest,
@@ -99,7 +99,7 @@ export function useClients() {
 
   useEffect(() => {
     fetchClients();
-  }, []);
+  }, [fetchClients]);
 
   return {
     clients,
