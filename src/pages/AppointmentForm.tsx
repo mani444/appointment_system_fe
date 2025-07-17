@@ -13,17 +13,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Plus, Loader2, Clock } from "lucide-react";
+import {
+  Plus,
+  Loader2,
+  Clock,
+  Search,
+  Check,
+  ChevronsUpDown,
+} from "lucide-react";
 import { useClients } from "@/hooks/useClients";
 import { useAppointments } from "@/hooks/useAppointments";
 import type { Appointment } from "@/types/api";
+import { cn } from "@/lib/utils";
 
 const appointmentSchema = z.object({
   client_id: z.string().min(1, "Please select a client"),
@@ -47,9 +53,19 @@ export function AppointmentForm({
   appointment,
 }: AppointmentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clientSearchTerm, setClientSearchTerm] = useState("");
+  const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
   const { clients } = useClients();
   const { createAppointment, updateAppointment, error, setError } =
     useAppointments();
+
+  // Filter clients based on search term
+  const filteredClients = clients.filter(
+    (client) =>
+      client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+      client.email.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+      client.phone.includes(clientSearchTerm),
+  );
 
   const {
     register,
@@ -103,6 +119,8 @@ export function AppointmentForm({
 
   const handleClose = () => {
     reset();
+    setClientSearchTerm("");
+    setClientPopoverOpen(false);
     onOpenChange(false);
   };
 
@@ -111,6 +129,23 @@ export function AppointmentForm({
     if (error) {
       setError(null);
     }
+  };
+
+  // Get selected client display name
+  const getSelectedClientName = (clientId: string) => {
+    const client = clients.find((c) => c.id.toString() === clientId);
+    return client ? `${client.name} - ${client.email}` : "Choose a client";
+  };
+
+  // Handle client selection
+  const handleClientSelect = (
+    clientId: string,
+    onChange: (value: string) => void,
+  ) => {
+    onChange(clientId);
+    setClientPopoverOpen(false);
+    setClientSearchTerm("");
+    clearErrorOnChange();
   };
 
   return (
@@ -141,24 +176,76 @@ export function AppointmentForm({
               name="client_id"
               control={control}
               render={({ field }) => (
-                <Select
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    clearErrorOnChange();
-                  }}
-                  value={field.value}
+                <Popover
+                  open={clientPopoverOpen}
+                  onOpenChange={setClientPopoverOpen}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id.toString()}>
-                        {client.name} - {client.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={clientPopoverOpen}
+                      className="w-full justify-between"
+                    >
+                      {getSelectedClientName(field.value)}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0">
+                    <div className="p-2">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search clients by name, email, or phone..."
+                          value={clientSearchTerm}
+                          onChange={(e) => setClientSearchTerm(e.target.value)}
+                          className="pl-8"
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {filteredClients.length === 0 ? (
+                        <div className="px-4 py-2 text-sm text-muted-foreground">
+                          {clientSearchTerm
+                            ? `No clients found matching "${clientSearchTerm}"`
+                            : "No clients available"}
+                        </div>
+                      ) : (
+                        filteredClients.map((client) => (
+                          <div
+                            key={client.id}
+                            className={cn(
+                              "flex items-center px-4 py-2 hover:bg-accent cursor-pointer",
+                              field.value === client.id.toString() &&
+                                "bg-accent",
+                            )}
+                            onClick={() =>
+                              handleClientSelect(
+                                client.id.toString(),
+                                field.onChange,
+                              )
+                            }
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                field.value === client.id.toString()
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              )}
+                            />
+                            <div className="flex-1">
+                              <div className="font-medium">{client.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {client.email}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
             />
             {errors.client_id && (
