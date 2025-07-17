@@ -48,7 +48,7 @@ export function AppointmentForm({
 }: AppointmentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { clients } = useClients();
-  const { createAppointment, updateAppointment } = useAppointments();
+  const { createAppointment, updateAppointment, error, setError } = useAppointments();
 
   const {
     register,
@@ -72,6 +72,7 @@ export function AppointmentForm({
 
   const onSubmit = async (data: AppointmentFormData) => {
     setIsSubmitting(true);
+    setError(null); // Clear any existing errors
     try {
       // Combine date and time into a single datetime
       const [hours, minutes] = data.time.split(":").map(Number);
@@ -104,6 +105,13 @@ export function AppointmentForm({
     onOpenChange(false);
   };
 
+  // Clear error when user starts interacting with the form
+  const clearErrorOnChange = () => {
+    if (error) {
+      setError(null);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
@@ -117,6 +125,14 @@ export function AppointmentForm({
               : "Create a new appointment for a client."}
           </DialogDescription>
         </DialogHeader>
+        
+        {/* Display backend errors */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="client">Select Client</Label>
@@ -124,7 +140,13 @@ export function AppointmentForm({
               name="client_id"
               control={control}
               render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select 
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    clearErrorOnChange();
+                  }} 
+                  value={field.value}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a client" />
                   </SelectTrigger>
@@ -151,7 +173,10 @@ export function AppointmentForm({
               render={({ field }) => (
                 <DatePicker
                   date={field.value}
-                  onDateChange={field.onChange}
+                  onDateChange={(date) => {
+                    field.onChange(date);
+                    clearErrorOnChange();
+                  }}
                   placeholder="Select appointment date"
                   disabled={isSubmitting}
                 />
@@ -170,6 +195,10 @@ export function AppointmentForm({
                 id="time"
                 type="time"
                 {...register("time")}
+                onChange={(e) => {
+                  register("time").onChange(e);
+                  clearErrorOnChange();
+                }}
                 disabled={isSubmitting}
                 className="flex-1"
               />

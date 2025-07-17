@@ -110,6 +110,7 @@ export function useAppointments(clientId?: number) {
     appointments,
     loading,
     error,
+    setError,
     refetch: fetchAppointments,
     createAppointment,
     updateAppointment,

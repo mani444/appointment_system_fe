@@ -26,6 +26,22 @@ api.interceptors.response.use(
       console.warn(
         "Backend API is not available. Make sure the Rails server is running on port 3000.",
       );
+    } else if (error.response?.data?.errors) {
+      // Backend API returned structured errors
+      const backendErrors = error.response.data.errors;
+      const errorMessage = Array.isArray(backendErrors) 
+        ? backendErrors.join(", ") 
+        : backendErrors;
+      
+      // Create a new error with the backend message
+      const enhancedError = new Error(errorMessage);
+      enhancedError.name = "BackendError";
+      return Promise.reject(enhancedError);
+    } else if (error.response?.data?.message) {
+      // Backend API returned a single message
+      const enhancedError = new Error(error.response.data.message);
+      enhancedError.name = "BackendError";
+      return Promise.reject(enhancedError);
     }
     return Promise.reject(error);
   },
