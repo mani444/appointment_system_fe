@@ -33,7 +33,7 @@ interface ClientFormProps {
 
 export function ClientForm({ open, onOpenChange }: ClientFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { createClient } = useClients();
+  const { createClient, error, setError } = useClients();
 
   const {
     register,
@@ -59,7 +59,15 @@ export function ClientForm({ open, onOpenChange }: ClientFormProps) {
 
   const handleClose = () => {
     reset();
+    setError(null); // Clear any existing errors
     onOpenChange(false);
+  };
+
+  // Clear error when user starts typing
+  const handleInputChange = () => {
+    if (error) {
+      setError(null);
+    }
   };
 
   return (
@@ -71,6 +79,13 @@ export function ClientForm({ open, onOpenChange }: ClientFormProps) {
             Fill in the details to add a new wellness client.
           </DialogDescription>
         </DialogHeader>
+
+        {error && (
+          <div className="p-3 rounded-md bg-red-50 border border-red-200">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
@@ -91,6 +106,7 @@ export function ClientForm({ open, onOpenChange }: ClientFormProps) {
               type="email"
               placeholder="Enter email address"
               {...register("email")}
+              onChange={handleInputChange}
             />
             {errors.email && (
               <p className="text-sm text-red-500">{errors.email.message}</p>

@@ -51,6 +51,19 @@ export function useClients() {
   ): Promise<Client | null> => {
     try {
       setError(null);
+
+      // Check for duplicate email in existing clients
+      const existingClient = clients.find(
+        (client) =>
+          client.email.toLowerCase() === clientData.email.toLowerCase(),
+      );
+
+      if (existingClient) {
+        const duplicateError = `A client with email "${clientData.email}" already exists`;
+        setError(duplicateError);
+        return null;
+      }
+
       const newClient = await clientsApi.create(clientData);
       // Use functional state update to ensure we get the latest state
       setClients((prev) => {
@@ -61,7 +74,21 @@ export function useClients() {
       });
       return newClient;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create client");
+      // Handle API errors (including server-side duplicate validation)
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to create client";
+
+      // Check if it's a duplicate email error from the server
+      if (
+        errorMessage.toLowerCase().includes("email") &&
+        (errorMessage.toLowerCase().includes("taken") ||
+          errorMessage.toLowerCase().includes("exists") ||
+          errorMessage.toLowerCase().includes("duplicate"))
+      ) {
+        setError(`A client with email "${clientData.email}" already exists`);
+      } else {
+        setError(errorMessage);
+      }
       return null;
     }
   };
@@ -72,6 +99,22 @@ export function useClients() {
   ): Promise<Client | null> => {
     try {
       setError(null);
+
+      // Check for duplicate email in existing clients (excluding the current client)
+      if (clientData.email) {
+        const existingClient = clients.find(
+          (client) =>
+            client.id !== id &&
+            client.email.toLowerCase() === clientData.email!.toLowerCase(),
+        );
+
+        if (existingClient) {
+          const duplicateError = `A client with email "${clientData.email}" already exists`;
+          setError(duplicateError);
+          return null;
+        }
+      }
+
       const updatedClient = await clientsApi.update(id, clientData);
       // Use functional state update to ensure we get the latest state
       setClients((prev) =>
@@ -79,7 +122,22 @@ export function useClients() {
       );
       return updatedClient;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update client");
+      // Handle API errors (including server-side duplicate validation)
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to update client";
+
+      // Check if it's a duplicate email error from the server
+      if (
+        clientData.email &&
+        errorMessage.toLowerCase().includes("email") &&
+        (errorMessage.toLowerCase().includes("taken") ||
+          errorMessage.toLowerCase().includes("exists") ||
+          errorMessage.toLowerCase().includes("duplicate"))
+      ) {
+        setError(`A client with email "${clientData.email}" already exists`);
+      } else {
+        setError(errorMessage);
+      }
       return null;
     }
   };
@@ -105,6 +163,7 @@ export function useClients() {
     clients,
     loading,
     error,
+    setError,
     refetch: fetchClients,
     createClient,
     updateClient,
