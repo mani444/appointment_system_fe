@@ -36,27 +36,8 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.warn("API not available, using mock data", err);
       // Fallback to mock data if API is not available
-      setClients([
-        {
-          id: 1,
-          name: "John Doe",
-          email: "john@example.com",
-          phone: "+1-555-0123",
-        },
-        {
-          id: 2,
-          name: "Jane Smith",
-          email: "jane@example.com",
-          phone: "+1-555-0456",
-        },
-        {
-          id: 3,
-          name: "Bob Johnson",
-          email: "bob@example.com",
-          phone: "+1-555-0789",
-        },
-      ]);
-      setError("Backend API not available - using demo data");
+      setClients([]);
+      setError("Backend API not available");
     } finally {
       setLoading(false);
     }
@@ -103,16 +84,8 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
       ) {
         setError(`A client with email "${clientData.email}" already exists`);
       } else {
-        // If backend is not available, create mock client for demo purposes
-        const mockClient = {
-          id: Math.max(...clients.map((c) => c.id), 0) + 1,
-          name: clientData.name,
-          email: clientData.email,
-          phone: clientData.phone,
-        };
-        setClients((prev) => [...prev, mockClient]);
-        setError("Backend API not available - client added to demo data");
-        return mockClient;
+        // No fallback - API must be available
+        setError(errorMessage);
       }
       return null;
     }
@@ -161,20 +134,8 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
       ) {
         setError(`A client with email "${clientData.email}" already exists`);
       } else {
-        // If backend is not available, update mock client for demo purposes
-        const updatedClient = {
-          id,
-          name: clientData.name || clients.find((c) => c.id === id)?.name || "",
-          email:
-            clientData.email || clients.find((c) => c.id === id)?.email || "",
-          phone:
-            clientData.phone || clients.find((c) => c.id === id)?.phone || "",
-        };
-        setClients((prev) =>
-          prev.map((client) => (client.id === id ? updatedClient : client)),
-        );
-        setError("Backend API not available - client updated in demo data");
-        return updatedClient;
+        // No fallback - API must be available
+        setError(errorMessage);
       }
       return null;
     }
@@ -187,11 +148,12 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
       // Use functional state update to ensure we get the latest state
       setClients((prev) => prev.filter((client) => client.id !== id));
       return true;
-    } catch {
-      // If backend is not available, delete from mock data for demo purposes
-      setClients((prev) => prev.filter((client) => client.id !== id));
-      setError("Backend API not available - client deleted from demo data");
-      return true;
+    } catch (err) {
+      // No fallback - API must be available
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to delete client";
+      setError(errorMessage);
+      return false;
     }
   };
 
