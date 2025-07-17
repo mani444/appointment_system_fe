@@ -33,7 +33,7 @@ interface ClientFormProps {
 
 export function ClientForm({ open, onOpenChange }: ClientFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { createClient, error, setError } = useClients();
+  const { createClient, error, setError, refetch } = useClients();
 
   const {
     register,
@@ -49,6 +49,9 @@ export function ClientForm({ open, onOpenChange }: ClientFormProps) {
     try {
       const result = await createClient(data);
       if (result) {
+        // Refresh data from server to ensure we have the latest state
+        await refetch();
+
         reset();
         onOpenChange(false);
       }

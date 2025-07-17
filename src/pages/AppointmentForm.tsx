@@ -55,9 +55,14 @@ export function AppointmentForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState("");
   const [clientPopoverOpen, setClientPopoverOpen] = useState(false);
-  const { clients } = useClients();
-  const { createAppointment, updateAppointment, error, setError } =
-    useAppointments();
+  const { clients, refetch: refetchClients } = useClients();
+  const {
+    createAppointment,
+    updateAppointment,
+    error,
+    setError,
+    refetch: refetchAppointments,
+  } = useAppointments();
 
   // Filter clients based on search term
   const filteredClients = clients.filter(
@@ -109,6 +114,9 @@ export function AppointmentForm({
       }
 
       if (result) {
+        // Refresh data from server to ensure we have the latest state
+        await Promise.all([refetchAppointments(), refetchClients()]);
+
         reset();
         onOpenChange(false);
       }
@@ -134,7 +142,7 @@ export function AppointmentForm({
   // Get selected client display name
   const getSelectedClientName = (clientId: string) => {
     const client = clients.find((c) => c.id.toString() === clientId);
-    return client ? `${client.name} - ${client.email}` : "Choose a client";
+    return client ? client.name : "Choose a client";
   };
 
   // Handle client selection
