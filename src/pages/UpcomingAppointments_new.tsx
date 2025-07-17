@@ -18,7 +18,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Calendar, Clock, User, Edit, Trash2, Plus, Loader2 } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  User,
+  Edit,
+  Trash2,
+  Plus,
+  Loader2,
+} from "lucide-react";
 import { AppointmentForm } from "@/pages/AppointmentForm";
 import { useAppointments } from "@/hooks/useAppointments";
 import { useClients } from "@/hooks/useClients";
@@ -26,7 +34,8 @@ import type { Appointment } from "@/types/api";
 
 export function UpcomingAppointments() {
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
   const { appointments, loading, error, deleteAppointment } = useAppointments();
   const { clients } = useClients();
 
@@ -45,15 +54,15 @@ export function UpcomingAppointments() {
   };
 
   const getClientName = (clientId: number) => {
-    const client = clients.find(c => c.id === clientId);
-    return client ? client.name : 'Unknown Client';
+    const client = clients.find((c) => c.id === clientId);
+    return client ? client.name : "Unknown Client";
   };
 
   const formatDateTime = (dateTime: string) => {
     const date = new Date(dateTime);
     return {
       date: date.toLocaleDateString(),
-      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
   };
 
@@ -160,15 +169,20 @@ export function UpcomingAppointments() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Cancel Appointment</AlertDialogTitle>
+                              <AlertDialogTitle>
+                                Cancel Appointment
+                              </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to cancel this appointment? This action cannot be undone.
+                                Are you sure you want to cancel this
+                                appointment? This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>No, Keep It</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleCancelAppointment(appointment.id)}
+                                onClick={() =>
+                                  handleCancelAppointment(appointment.id)
+                                }
                               >
                                 Yes, Cancel
                               </AlertDialogAction>

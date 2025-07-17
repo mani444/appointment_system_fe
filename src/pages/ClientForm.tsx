@@ -1,3 +1,7 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,7 +12,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
+import { useClients } from "@/hooks/useClients";
+
+const clientSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  phone: z.string().min(1, "Phone number is required"),
+});
+
+type ClientFormData = z.infer<typeof clientSchema>;
 
 interface ClientFormProps {
   open: boolean;
@@ -16,15 +32,38 @@ interface ClientFormProps {
 }
 
 export function ClientForm({ open, onOpenChange }: ClientFormProps) {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission here
-    console.log("Client added");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createClient } = useClients();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<ClientFormData>({
+    resolver: zodResolver(clientSchema),
+  });
+
+  const onSubmit = async (data: ClientFormData) => {
+    setIsSubmitting(true);
+    try {
+      const result = await createClient(data);
+      if (result) {
+        reset();
+        onOpenChange(false);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    reset();
     onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Client</DialogTitle>
@@ -32,10 +71,17 @@ export function ClientForm({ open, onOpenChange }: ClientFormProps) {
             Fill in the details to add a new wellness client.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
-            <Input id="name" placeholder="Enter client's full name" required />
+            <Input
+              id="name"
+              placeholder="Enter client's full name"
+              {...register("name")}
+            />
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -44,8 +90,11 @@ export function ClientForm({ open, onOpenChange }: ClientFormProps) {
               id="email"
               type="email"
               placeholder="Enter email address"
-              required
+              {...register("email")}
             />
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -54,41 +103,34 @@ export function ClientForm({ open, onOpenChange }: ClientFormProps) {
               id="phone"
               type="tel"
               placeholder="Enter phone number"
-              required
+              {...register("phone")}
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="address">Address (Optional)</Label>
-            <Input id="address" placeholder="Enter client's address" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="dateOfBirth">Date of Birth (Optional)</Label>
-            <Input id="dateOfBirth" type="date" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="emergencyContact">
-              Emergency Contact (Optional)
-            </Label>
-            <Input
-              id="emergencyContact"
-              placeholder="Emergency contact name and phone"
-            />
+            {errors.phone && (
+              <p className="text-sm text-red-500">{errors.phone.message}</p>
+            )}
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Client
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Client
+                </>
+              )}
             </Button>
           </div>
         </form>

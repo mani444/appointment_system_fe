@@ -1,3 +1,7 @@
+import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,28 +19,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, User } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
+import { useClients } from "@/hooks/useClients";
+import { useAppointments } from "@/hooks/useAppointments";
+import type { Appointment } from "@/types/api";
 
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phoneNumber: string;
-}
+const appointmentSchema = z.object({
+  client_id: z.string().min(1, "Please select a client"),
+  time: z.string().min(1, "Please select date and time"),
+});
+
+type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
 interface AppointmentFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appointment?: {
-    id: string;
-    title: string;
-    time: string;
-    date: string;
-    provider: string;
-    type: string;
-    clientId?: string;
-  } | null;
+  appointment?: Appointment | null;
 }
 
 export function AppointmentForm({
@@ -44,259 +42,130 @@ export function AppointmentForm({
   onOpenChange,
   appointment,
 }: AppointmentFormProps) {
-  // Mock client data (same as in Clients.tsx)
-  const clients: Client[] = [
-    {
-      id: "1",
-      name: "Emma Johnson",
-      email: "emma.johnson@email.com",
-      phoneNumber: "+1 (555) 123-4567",
-    },
-    {
-      id: "2",
-      name: "Michael Chen",
-      email: "michael.chen@email.com",
-      phoneNumber: "+1 (555) 234-5678",
-    },
-    {
-      id: "3",
-      name: "Sarah Williams",
-      email: "sarah.williams@email.com",
-      phoneNumber: "+1 (555) 345-6789",
-    },
-    {
-      id: "4",
-      name: "David Rodriguez",
-      email: "david.rodriguez@email.com",
-      phoneNumber: "+1 (555) 456-7890",
-    },
-    {
-      id: "5",
-      name: "Lisa Thompson",
-      email: "lisa.thompson@email.com",
-      phoneNumber: "+1 (555) 567-8901",
-    },
-    {
-      id: "6",
-      name: "James Anderson",
-      email: "james.anderson@email.com",
-      phoneNumber: "+1 (555) 678-9012",
-    },
-  ];
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { clients } = useClients();
+  const { createAppointment, updateAppointment } = useAppointments();
 
-  const getAppointmentTypeValue = (title: string) => {
-    switch (title) {
-      case "Wellness Consultation":
-        return "wellness";
-      case "Nutrition Planning":
-        return "nutrition";
-      case "Fitness Assessment":
-        return "fitness";
-      case "Mental Health Session":
-        return "mental";
-      default:
-        return undefined;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue,
+    control,
+  } = useForm<AppointmentFormData>({
+    resolver: zodResolver(appointmentSchema),
+  });
+
+  useEffect(() => {
+    if (appointment) {
+      setValue("client_id", appointment.client_id.toString());
+      setValue("time", new Date(appointment.time).toISOString().slice(0, 16));
+    }
+  }, [appointment, setValue]);
+
+  const onSubmit = async (data: AppointmentFormData) => {
+    setIsSubmitting(true);
+    try {
+      const appointmentData = {
+        client_id: parseInt(data.client_id),
+        time: new Date(data.time).toISOString(),
+      };
+
+      let result;
+      if (appointment) {
+        result = await updateAppointment(appointment.id, appointmentData);
+      } else {
+        result = await createAppointment(appointmentData);
+      }
+
+      if (result) {
+        reset();
+        onOpenChange(false);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const getProviderValue = (provider: string) => {
-    switch (provider) {
-      case "Dr. Sarah Johnson":
-        return "sarah";
-      case "Lisa Chen, RD":
-        return "lisa";
-      case "Mike Rodriguez":
-        return "mike";
-      case "Dr. Anna Smith":
-        return "anna";
-      default:
-        return undefined;
-    }
-  };
-
-  const getSessionTypeValue = (type: string) => {
-    return type.toLowerCase();
-  };
-
-  const convertDateToInput = (date: string) => {
-    // Convert display dates like "Today", "Tomorrow", "July 16" to input format
-    if (date === "Today") {
-      return new Date().toISOString().split("T")[0];
-    } else if (date === "Tomorrow") {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow.toISOString().split("T")[0];
-    } else if (date.includes("July")) {
-      // For "July 16" format, use current year
-      const year = new Date().getFullYear();
-      const day = date.split(" ")[1];
-      return `${year}-07-${day.padStart(2, "0")}`;
-    }
-    return undefined;
-  };
-
-  const convertTimeToInput = (time: string) => {
-    // Convert "10:00 AM" to "10:00" format
-    const [timePart, period] = time.split(" ");
-    const [hours, minutes] = timePart.split(":");
-    let hour24 = parseInt(hours);
-
-    if (period === "PM" && hour24 !== 12) {
-      hour24 += 12;
-    } else if (period === "AM" && hour24 === 12) {
-      hour24 = 0;
-    }
-
-    return `${hour24.toString().padStart(2, "0")}:${minutes}`;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission here
-    console.log("Appointment scheduled");
+  const handleClose = () => {
+    reset();
     onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
             {appointment ? "Edit Appointment" : "Schedule New Appointment"}
           </DialogTitle>
           <DialogDescription>
             {appointment
-              ? "Update the details for your appointment."
-              : "Fill in the details to schedule a new wellness appointment."}
+              ? "Update the appointment details."
+              : "Create a new appointment for a client."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Appointment Type</Label>
-            <Select
-              defaultValue={
-                appointment
-                  ? getAppointmentTypeValue(appointment.title)
-                  : undefined
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select appointment type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="wellness">Wellness Consultation</SelectItem>
-                <SelectItem value="nutrition">Nutrition Planning</SelectItem>
-                <SelectItem value="fitness">Fitness Assessment</SelectItem>
-                <SelectItem value="mental">Mental Health Session</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="client" className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>Client</span>
-            </Label>
-            <Select defaultValue={appointment?.clientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{client.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {client.email}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="provider">Provider</Label>
-            <Select
-              defaultValue={
-                appointment ? getProviderValue(appointment.provider) : undefined
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select provider" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sarah">Dr. Sarah Johnson</SelectItem>
-                <SelectItem value="lisa">Lisa Chen, RD</SelectItem>
-                <SelectItem value="mike">Mike Rodriguez</SelectItem>
-                <SelectItem value="anna">Dr. Anna Smith</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
-              <Input
-                type="date"
-                id="date"
-                defaultValue={
-                  appointment ? convertDateToInput(appointment.date) : undefined
-                }
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="time">Time</Label>
-              <Input
-                type="time"
-                id="time"
-                defaultValue={
-                  appointment ? convertTimeToInput(appointment.time) : undefined
-                }
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="type">Session Type</Label>
-            <Select
-              defaultValue={
-                appointment ? getSessionTypeValue(appointment.type) : undefined
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select session type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="virtual">Virtual</SelectItem>
-                <SelectItem value="in-person">In-person</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any additional notes or requirements..."
-              rows={3}
+            <Label htmlFor="client">Select Client</Label>
+            <Controller
+              name="client_id"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id.toString()}>
+                        {client.name} - {client.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             />
+            {errors.client_id && (
+              <p className="text-sm text-red-500">{errors.client_id.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="time">Date and Time</Label>
+            <Input
+              id="time"
+              type="datetime-local"
+              {...register("time")}
+              min={new Date().toISOString().slice(0, 16)}
+            />
+            {errors.time && (
+              <p className="text-sm text-red-500">{errors.time.message}</p>
+            )}
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit">
-              <Plus className="h-4 w-4 mr-2" />
-              {appointment ? "Update Appointment" : "Schedule Appointment"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {appointment ? "Updating..." : "Scheduling..."}
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {appointment ? "Update Appointment" : "Schedule Appointment"}
+                </>
+              )}
             </Button>
           </div>
         </form>

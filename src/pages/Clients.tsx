@@ -8,65 +8,43 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Mail, Phone, Plus, Search } from "lucide-react";
+import { Users, Mail, Phone, Plus, Search, Loader2 } from "lucide-react";
 import { ClientForm } from "@/pages/ClientForm";
-
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phoneNumber: string;
-}
+import { useClients } from "@/hooks/useClients";
 
 export function Clients() {
   const [isClientFormOpen, setIsClientFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const clients: Client[] = [
-    {
-      id: "1",
-      name: "Emma Johnson",
-      email: "emma.johnson@email.com",
-      phoneNumber: "+1 (555) 123-4567",
-    },
-    {
-      id: "2",
-      name: "Michael Chen",
-      email: "michael.chen@email.com",
-      phoneNumber: "+1 (555) 234-5678",
-    },
-    {
-      id: "3",
-      name: "Sarah Williams",
-      email: "sarah.williams@email.com",
-      phoneNumber: "+1 (555) 345-6789",
-    },
-    {
-      id: "4",
-      name: "David Rodriguez",
-      email: "david.rodriguez@email.com",
-      phoneNumber: "+1 (555) 456-7890",
-    },
-    {
-      id: "5",
-      name: "Lisa Thompson",
-      email: "lisa.thompson@email.com",
-      phoneNumber: "+1 (555) 567-8901",
-    },
-    {
-      id: "6",
-      name: "James Anderson",
-      email: "james.anderson@email.com",
-      phoneNumber: "+1 (555) 678-9012",
-    },
-  ];
+  const { clients, loading, error } = useClients();
 
   const filteredClients = clients.filter(
     (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phoneNumber.includes(searchTerm),
+      client.phone.includes(searchTerm),
   );
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading clients...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Error: {error}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -128,7 +106,7 @@ export function Clients() {
                       </div>
                       <div className="flex items-center space-x-1 text-sm text-muted-foreground mt-1">
                         <Phone className="h-3 w-3" />
-                        <span>{client.phoneNumber}</span>
+                        <span>{client.phone}</span>
                       </div>
                     </div>
                   </div>
