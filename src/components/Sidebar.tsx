@@ -1,4 +1,4 @@
-import { Calendar, Home, Settings, Users } from "lucide-react";
+import { Calendar, Users } from "lucide-react";
 
 interface SidebarProps {
   activeView: string;
@@ -7,10 +7,8 @@ interface SidebarProps {
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const menuItems = [
-    { icon: Home, label: "Dashboard" },
     { icon: Calendar, label: "Appointments" },
     { icon: Users, label: "Clients" },
-    { icon: Settings, label: "Settings" },
   ];
 
   return (

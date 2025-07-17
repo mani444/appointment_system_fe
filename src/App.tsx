@@ -5,23 +5,19 @@ import { Clients } from "@/pages/Clients";
 import { AppointmentForm } from "@/pages/AppointmentForm";
 
 function App() {
-  const [activeView, setActiveView] = useState("Dashboard");
+  const [activeView, setActiveView] = useState("Appointments");
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
 
   const handleViewChange = (view: string) => {
-    if (view === "Appointments") {
-      setShowAppointmentForm(true);
-    } else {
-      setActiveView(view);
-      setShowAppointmentForm(false);
-    }
+    setActiveView(view);
+    setShowAppointmentForm(false);
   };
 
   const renderPage = () => {
     switch (activeView) {
       case "Clients":
         return <Clients />;
-      case "Dashboard":
+      case "Appointments":
       default:
         return <UpcomingAppointments />;
     }
