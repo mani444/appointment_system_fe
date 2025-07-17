@@ -49,7 +49,7 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null);
 
-      // Check for duplicate email in existing clients
+      // Client-side duplicate check for immediate feedback
       const existingClient = clients.find(
         (client) =>
           client.email.toLowerCase() === clientData.email.toLowerCase(),
@@ -62,9 +62,8 @@ export function ClientsProvider({ children }: { children: React.ReactNode }) {
       }
 
       const newClient = await clientsApi.create(clientData);
-      // Use functional state update to ensure we get the latest state
       setClients((prev) => {
-        // Check if client already exists to avoid duplicates
+        // Prevent duplicate entries from race conditions
         const exists = prev.some((client) => client.id === newClient.id);
         if (exists) return prev;
         return [...prev, newClient];

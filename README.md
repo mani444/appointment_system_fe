@@ -1,90 +1,139 @@
 # Virtual Wellness Platform
 
-A modern wellness management platform built with React, TypeScript, Tailwind CSS, and shadcn/ui components.
+A React-based appointment management system for wellness professionals to manage clients and schedule appointments.
 
-## Tech Stack
+## Setup Instructions
 
-- **React 19.1.0** with TypeScript 5.8.3
-- **Vite 5.4.19** for build tooling and development server
-- **Tailwind CSS 3.4.17** for styling
-- **shadcn/ui 0.0.4** for component library
-- **Lucide React 0.525.0** for icons
-- **Radix UI** primitives for accessible components
-- **Class Variance Authority** for component variants
+### Prerequisites
 
-## Prerequisites
+- Node.js 20 or higher
+- npm (comes with Node.js)
+- Rails backend running on port 3000 (separate repository)
 
-- **Node.js 20** or higher
-- **npm** (comes with Node.js)
+### Installation
 
-## Getting Started
-
-### 1. Clone the Repository
+1. Clone the repository:
 
 ```bash
 git clone https://github.com/mani444/appointments_system_FE.git
-cd virtual-wellness-platform
+cd appointments_system_fe
 ```
 
-### 2. Install Dependencies
+2. Install dependencies:
 
 ```bash
 npm install
 ```
 
-### 3. Start Development Server
+3. Create environment file:
+
+```bash
+# Create .env file in project root
+echo "VITE_API_URL=http://localhost:3000" > .env
+```
+
+4. Start the development server:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) with your browser to see the application.
+The application will be available at `http://localhost:5173`
 
-## Available Scripts
+### Available Commands
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 
-## Project Structure
+## Tech Stack
 
-```
-src/
-├── components/
-│   ├── ui/           # shadcn/ui components
-│   └── Sidebar.tsx   # Custom components
-├── pages/            # Page components
-│   ├── UpcomingAppointments.tsx
-│   ├── Clients.tsx
-│   ├── AppointmentForm.tsx
-│   └── ClientForm.tsx
-├── layout/           # Layout components
-│   └── Layout.tsx
-├── lib/              # Utilities
-│   └── utils.ts
-└── App.tsx
-```
+- **React 19.1.0** - Frontend framework
+- **TypeScript 5.8.3** - Type safety
+- **Vite 5.4.19** - Build tool and development server
+- **Tailwind CSS 3.4.17** - Styling
+- **shadcn/ui** - UI component library
+- **React Hook Form** - Form management
+- **Zod** - Schema validation
+- **Axios** - HTTP client
+- **React Router DOM** - Client-side routing
+- **React Context API** - State management
 
-## Features
+## Architecture Decisions
 
-- **Dashboard** - View upcoming appointments and wellness overview
-- **Client Management** - Add, view, and search wellness clients
-- **Appointment Scheduling** - Create, edit, and cancel appointments
-- **Responsive Design** - Works on desktop and mobile devices
+### State Management
 
-## Development
+Chose React Context API over Redux for simplicity. The application has straightforward state requirements that don't justify Redux's complexity.
 
-This project uses:
+### Form Handling
 
-- **TypeScript** for type safety
-- **Tailwind CSS** for utility-first styling
-- **shadcn/ui** components with CSS variables for theming
+React Hook Form with Zod validation provides excellent developer experience and performance with minimal re-renders.
 
-## Contributing
+### API Integration
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+Custom hooks with Context providers abstract API complexity while providing clean interfaces to components.
+
+## Assumptions Made
+
+### Backend API
+
+- Rails backend follows RESTful conventions
+- API responses use format: `{ success: boolean, data: T, message?: string }`
+- Error responses include `errors` array for validation failures
+- CORS is configured to allow frontend requests
+
+### Business Logic
+
+- Email addresses must be unique across clients
+- Appointments can be edited and cancelled
+- Time slots don't have conflict validation
+- Client search should work across name, email, and phone
+
+## API Integration
+
+The frontend connects to a Rails backend through a service layer:
+
+### Error Handling Strategy
+
+1. **Client-side validation** - Immediate feedback using Zod schemas
+2. **API error parsing** - Axios interceptors convert backend errors to user-friendly messages
+3. **Graceful degradation** - App shows friendly errors when backend is unavailable
+4. **Duplicate prevention** - Email uniqueness checked both client and server-side
+
+### Service Layer
+
+- `clientsApi` - CRUD operations for client management
+- `appointmentsApi` - CRUD operations for appointment scheduling
+- Centralized error handling and response formatting
+
+## Current Implementation
+
+### ✅ Core Features
+
+- Display list of clients (name, email, phone)
+- Show upcoming appointments
+- Schedule new appointments
+- Edit existing appointments
+- Cancel appointments with confirmation
+- Search/filter clients
+
+### ✅ Technical Features
+
+- Fully responsive design
+- TypeScript throughout
+- Form validation with error handling
+- Loading states and error boundaries
+- Clean component architecture
+
+## Time Spent
+
+- **Initial setup and architecture**: 2 hours
+- **Core client management**: 2 hours
+- **Appointment scheduling system**: 3 hours
+- **Form validation and error handling**: 1.5 hours
+- **UI/UX polish and responsiveness**: 1 hour
+- **API integration and testing**: 1.5 hours
+- **Code cleanup and documentation**: 1 hour
+
+**Total: ~12 hours**

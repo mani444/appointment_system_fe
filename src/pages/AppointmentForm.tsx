@@ -96,7 +96,7 @@ export function AppointmentForm({
     setIsSubmitting(true);
     setError(null); // Clear any existing errors
     try {
-      // Combine date and time into a single datetime
+      // Convert separate date and time inputs to ISO datetime string
       const [hours, minutes] = data.time.split(":").map(Number);
       const combinedDateTime = new Date(data.date);
       combinedDateTime.setHours(hours, minutes, 0, 0);
