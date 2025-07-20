@@ -51,6 +51,7 @@ api.interceptors.response.use(
 export const clientsApi = {
   // Get all clients
   getAll: async (): Promise<Client[]> => {
+    console.log("import.meta.env.VITE_API_URL", import.meta.env.VITE_API_URL);
     const response = await api.get<ApiResponse<Client[]>>("/clients");
     return response.data.data;
   },
